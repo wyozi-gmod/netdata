@@ -6,14 +6,14 @@ if SERVER then
 		net.WriteEntity(self)
 		net.WriteUInt(self.NetDataHash and tonumber(util.CRC(self:NetDataHash())) or 0, 32)
 		self:NetDataWrite()
-		net.SendPVS(self:GetPos())
+		net.SendPVS(self:LocalToWorld(self:OBBCenter()))
 	end
-	
+
 	util.AddNetworkString("netdata")
 	net.Receive("netdata", function(len, cl)
 		local ent = net.ReadEntity()
 		local prevHash = net.ReadUInt(32)
-		
+
 		if IsValid(ent) and ent.NetDataWrite then
 			local curHash = ent.NetDataHash and tonumber(util.CRC(ent:NetDataHash())) or 0
 			if curHash == 0 or prevHash == 0 or curHash ~= prevHash then
@@ -30,12 +30,12 @@ if CLIENT then
 	hook.Add("NotifyShouldTransmit", "NetDataRequest", function(e, should)
 		if e.NetDataRead and should then
 			local prevHash = e._NetDataPrevHash or 0
-			
+
 			net.Start("netdata")
 			net.WriteEntity(e)
 			net.WriteUInt(prevHash, 32)
 			net.SendToServer()
-			
+
 			if cvars.Number("developer") > 0 then
 				print("[NetData] Asking for netdata due to PVS for " .. tostring(e) .. " using hash " .. prevHash)
 			end
@@ -48,7 +48,7 @@ if CLIENT then
 			net.WriteEntity(e)
 			net.WriteUInt(0, 32)
 			net.SendToServer()
-			
+
 			if cvars.Number("developer") > 0 then
 				print("[NetData] Asking for netdata due to NEC for " .. tostring(e))
 			end
